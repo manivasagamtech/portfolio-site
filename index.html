@@ -1,61 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Portfolio</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            text-align: center;
-        }
-        header {
-            background-color: #333;
-            color: white;
-            padding: 20px 0;
-        }
-        h1 {
-            margin: 0;
-        }
-        section {
-            padding: 20px;
-            max-width: 800px;
-            margin: auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        footer {
-            margin-top: 20px;
-            padding: 10px;
-            background: #333;
-            color: white;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Portfolio</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f6f7f9;color:#0f172a}
+    header{background:#fff;border-bottom:1px solid #e5e7eb;padding:14px 16px;text-align:center;font-weight:700}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px 16px}
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+    .card img{width:100%;height:180px;object-fit:cover;display:block}
+    .card .b{padding:12px}
+    .tag{display:inline-block;font-size:12px;background:#eef2f7;border-radius:999px;padding:4px 8px;margin-right:6px;margin-top:6px}
+  </style>
 </head>
 <body>
-    <header>
-        <h1>My Portfolio</h1>
-        <p>Welcome to my personal website!</p>
-    </header>
+  <header>My Portfolio</header>
 
-    <section>
-        <h2>About Me</h2>
-        <p>Hello! I am learning web development and this is my first GitHub Pages site.</p>
+  <main class="wrap">
+    <h2>Recent Work</h2>
+    <p style="color:#475569">Projects pulled from Supabase.</p>
+    <div id="grid" class="grid"></div>
+    <p id="err" style="color:#ef4444"></p>
+  </main>
 
-        <h2>Projects</h2>
-        <ul style="text-align:left; display:inline-block;">
-            <li>Project 1 - Coming soon</li>
-            <li>Project 2 - Coming soon</li>
-            <li>Project 3 - Coming soon</li>
-        </ul>
-    </section>
+  <script>
+    // 🔧 change these two lines to your values
+    const SUPABASE_URL  = "https://ilncxleitejbrsubsdin.supabase.co";
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsbmN4bGVpdGVqYnJzdWJzZGluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4MDA5NjQsImV4cCI6MjA3MDM3Njk2NH0.wCR2UouQSTbxCTeSp7DgqzQ08ExCv1IQMAbHA1zR5Hk";
 
-    <footer>
-        <p>© 2025 My Portfolio</p>
-    </footer>
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    async function load() {
+      // 1) get published projects
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id,title,summary,tags,cover_path,created_at")
+        .eq("published", true)
+        .order("created_at", { ascending: false })
+        .limit(24);
+
+      if (error) {
+        document.getElementById("err").textContent = error.message;
+        return;
+      }
+
+      // 2) make signed URLs for private images
+      const items = await Promise.all((data||[]).map(async (p) => {
+        let coverUrl = "";
+        if (p.cover_path) {
+          const { data: signed, error: signErr } = await supabase
+            .storage.from("portfolio")
+            .createSignedUrl(p.cover_path, 3600); // 1 hour
+          if (!signErr) coverUrl = signed.signedUrl;
+        }
+        return { ...p, coverUrl };
+      }));
+
+      // 3) show on the page
+      const grid = document.getElementById("grid");
+      grid.innerHTML = items.map(p => `
+        <div class="card">
+          ${p.coverUrl ? `<img src="${p.coverUrl}" alt="${p.title}">` : ""}
+          <div class="b">
+            <div style="font-weight:600">${p.title}</div>
+            <div style="font-size:14px;color:#475569;margin-top:6px">${p.summary ?? ""}</div>
+            ${Array.isArray(p.tags)&&p.tags.length?`<div>${p.tags.slice(0,3).map(t=>`<span class="tag">${t}</span>`).join("")}</div>`:""}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    load();
+  </script>
 </body>
 </html>
