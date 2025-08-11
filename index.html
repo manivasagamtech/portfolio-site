@@ -62,14 +62,23 @@
       // 3) show on the page
       const grid = document.getElementById("grid");
       grid.innerHTML = items.map(p => `
-        <div class="card">
-          ${p.coverUrl ? `<img src="${p.coverUrl}" alt="${p.title}">` : ""}
-          <div class="b">
-            <div style="font-weight:600">${p.title}</div>
-            <div style="font-size:14px;color:#475569;margin-top:6px">${p.summary ?? ""}</div>
-            ${Array.isArray(p.tags)&&p.tags.length?`<div>${p.tags.slice(0,3).map(t=>`<span class="tag">${t}</span>`).join("")}</div>`:""}
-          </div>
-        </div>
+      ${p.coverUrl
+  ? `<a class="card" href="${p.coverUrl}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">
+       <img src="${p.coverUrl}" alt="${p.title}">
+       <div class="b">
+         <div style="font-weight:600">${p.title}</div>
+         <div style="font-size:14px;color:#475569;margin-top:6px">${p.summary ?? ""}</div>
+         ${Array.isArray(p.tags)&&p.tags.length?`<div>${p.tags.slice(0,3).map(t=>`<span class="tag">${t}</span>`).join("")}</div>`:""}
+       </div>
+     </a>`
+  : `<div class="card">
+       <div class="b">
+         <div style="font-weight:600">${p.title}</div>
+         <div style="font-size:14px;color:#475569;margin-top:6px">${p.summary ?? ""}</div>
+       </div>
+     </div>`
+}
+
       `).join("");
     }
 
