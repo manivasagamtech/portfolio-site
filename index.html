@@ -26,6 +26,38 @@
     <div id="grid" class="grid"></div>
     <p id="err" style="color:#ef4444"></p>
   </main>
+<section>
+  <h2>Canva Works</h2>
+  <div id="canva-projects" class="projects-grid"></div>
+</section>
+
+<script>
+async function loadCanvaProjects() {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .contains('tags', ['canva']);
+
+  if (error) {
+    console.error('Error fetching Canva projects:', error);
+    return;
+  }
+
+  const container = document.getElementById('canva-projects');
+  container.innerHTML = data.map(project => `
+    <div class="project-card">
+      <a href="${project.cover_path}" target="_blank">
+        <img src="${project.cover_path}" alt="${project.title}">
+      </a>
+      <h3>${project.title}</h3>
+      <p>${project.summary}</p>
+    </div>
+  `).join('');
+}
+
+loadCanvaProjects();
+</script>
+
 
   <script>
     // 🔧 change these two lines to your values
